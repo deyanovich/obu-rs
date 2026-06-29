@@ -1,0 +1,93 @@
+[package]
+name = "obu"
+# The unauthenticated / obfuscation tier of the oboron family, aligned
+# with oboron protocol spec 1.0 (the OBU layer): two schemes, `upcbc`
+# (unauthenticated probabilistic AES-256-CBC) and `zdcbc` (obfuscation-
+# only deterministic AES-128-CBC). Versioned independently — the obu
+# layer has its own stability surface and release cadence.
+version = "1.0.0"
+edition = "2021"
+rust-version = "1.77.0"
+license = "MIT OR Apache-2.0"
+repository = "https://gitlab.com/oboron/obu-rs"
+authors = ["Bojan Đuričković"]
+description = "Unauthenticated / obfuscation codecs of the oboron family: probabilistic AES-256-CBC (upcbc, confidentiality only) and deterministic AES-128-CBC (zdcbc, obfuscation only). NOT authenticated — never use to protect secrets."
+keywords = ["obfuscation", "encoding", "base32", "unauthenticated", "oboron"]
+categories = ["encoding"]
+readme = "README.md"
+homepage = "https://oboron.org/"
+documentation = "https://oboron.org/obu-spec/oboron-obu-v1.0.html"
+
+[features]
+# Default: both spec schemes. zdcbc is OPTIONAL per the spec (it is the
+# weakest, obfuscation-only scheme); it is enabled by default here but
+# can be turned off by a consumer that only wants `upcbc`.
+default = ["upcbc", "zdcbc"]
+
+# Unauthenticated probabilistic AES-256-CBC (confidentiality only).
+upcbc = ["aes", "cipher", "cbc"]
+
+# Obfuscation-only deterministic AES-128-CBC (NOT secure).
+zdcbc = ["aes", "cipher", "cbc"]
+
+# Testing-only identity scheme (zmock1; no encryption).
+mock = []
+
+# Hardcoded-secret constructors for testing/obfuscation.
+keyless = []
+
+# DEPRECATED standalone `legacy` obfuscation codec (`obu::Legacy`), kept
+# only to decode / reproduce pre-1.0 `legacy`-format obtext. NOT in the
+# default set, and deliberately isolated from the scheme machinery.
+legacy = ["aes", "cipher", "cbc"]
+
+[lib]
+name = "obu"
+path = "src/lib.rs"
+crate-type = ["rlib"]
+
+[dependencies]
+# Always needed.
+data-encoding = "2.5"
+hex = "0.4"
+once_cell = "1.21.3"
+thiserror = "1.0"
+
+# Conditionally included based on features (AES-CBC schemes).
+aes = { version = "0.8", optional = true }
+cipher = { version = "0.4", optional = true }
+cbc = { version = "0.1", optional = true }
+
+# rand with getrandom — default features on native, getrandom/js on
+# wasm. Always present: `upcbc` needs it for the per-message random IV.
+[target.'cfg(not(target_arch = "wasm32"))'.dependencies]
+rand = "0.8"
+
+[target.'cfg(target_arch = "wasm32")'.dependencies]
+rand = { version = "0.8", features = ["getrandom"] }
+getrandom = { version = "0.2", features = ["js"] }
+
+[dev-dependencies]
+obu = { path = ".", features = ["upcbc", "zdcbc", "mock", "keyless", "legacy"] }
+criterion = { version = "0.5", features = ["html_reports"] }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+# Only the legacy-vector test needs this — to base64url-decode the
+# secret carried by legacy-test-vectors.jsonl (a frozen pre-1.0 artifact).
+data-encoding = "2"
+
+[[bench]]
+name = "zdcbc_c32"
+harness = false
+
+[[bench]]
+name = "zdcbc_b32"
+harness = false
+
+[[bench]]
+name = "zdcbc_b64"
+harness = false
+
+[[bench]]
+name = "zdcbc_hex"
+harness = false

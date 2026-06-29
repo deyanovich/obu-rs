@@ -1,0 +1,52 @@
+# CI for obu. Runs on the authoritative GitLab project.
+#
+# Uses gitlab.com shared runners with the official Rust Docker image.
+# The pipeline gates the test suite across the feature matrix plus
+# clippy — even an obfuscation-only codec must never ship with a
+# failing or unrun test.
+
+stages:
+  - test
+
+variables:
+  CARGO_TERM_COLOR: always
+  CARGO_HOME: "$CI_PROJECT_DIR/.cargo"
+
+cache:
+  key: "$CI_COMMIT_REF_SLUG"
+  paths:
+    - .cargo/registry/
+    - target/
+
+default:
+  image: rust:latest
+  before_script:
+    - rustc --version && cargo --version
+
+# Full suite (the conformance + negative vectors need `keyless` and the
+# vectors submodule), the all-features build, and each scheme on its
+# own. The vectors are a submodule, so check out recursively.
+test:
+  stage: test
+  variables:
+    GIT_SUBMODULE_STRATEGY: recursive
+  script:
+    - cargo test -p obu --features keyless
+    - cargo test -p obu --all-features
+    - cargo build -p obu --no-default-features --features upcbc
+    - cargo build -p obu --no-default-features --features zdcbc
+
+lint:
+  stage: test
+  script:
+    - rustup component add clippy
+    - cargo clippy --workspace --all-features -- -D warnings
+
+# Validates the declared MSRV (rust-version = 1.77). Non-blocking.
+msrv:
+  stage: test
+  image: rust:1.77
+  allow_failure: true
+  cache: {}
+  script:
+    - cargo build -p obu --all-features
