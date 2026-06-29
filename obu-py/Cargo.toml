@@ -1,0 +1,54 @@
+[package]
+name = "obu-py"
+# Tracks the obu Rust crate: 1.0.0 aligns with the obu spec 1.0 —
+# the unauthenticated / obfuscation tier of the oboron family. The
+# authenticated core (oboron) ships separate Python bindings.
+version = "1.0.0"
+edition = "2021"
+rust-version = "1.77.0"
+authors = ["Bojan Đuričković"]
+license = "MIT OR Apache-2.0"
+repository = "https://gitlab.com/oboron/obu-rs"
+description = "Python bindings for obu — string-in/string-out UNAUTHENTICATED confidentiality (upcbc) and obfuscation-only (zdcbc) codecs of the oboron family. NOT authenticated; never use to protect secrets."
+keywords = ["python", "obfuscation", "encoding", "unauthenticated", "oboron"]
+categories = ["encoding", "api-bindings"]
+readme = "README.md"
+homepage = "https://oboron.org/"
+documentation = "https://oboron.org/obu-spec/oboron-obu-v1.0.html"
+# Not a crates.io publication target — this crate ships to PyPI via
+# maturin (see pyproject.toml), not to crates.io.
+publish = false
+
+[lib]
+name = "_obu"
+crate-type = ["cdylib"]
+
+[features]
+# Default: both spec schemes plus the keyless constructors. The
+# testing-only `mock` (zmock1) identity scheme and the deprecated
+# `legacy` codec are NOT default — they must never ship in a published
+# wheel; enable them explicitly for tests / legacy decoding.
+default = ["upcbc", "zdcbc", "keyless"]
+
+# Individual schemes — each forwards to the obu core feature that gates
+# the wrapper code there, and is also used as a local cfg gate in
+# src/lib.rs to omit the per-scheme Python classes when disabled. obu
+# has only two schemes, so there is no aggregate group.
+upcbc = ["obu/upcbc"]
+zdcbc = ["obu/zdcbc"]
+
+# Testing-only identity scheme (zmock1; no encryption).
+mock = ["obu/mock"]
+
+# Hardcoded-secret constructors (`new_keyless`, `enc_keyless`, …) for
+# testing / obfuscation. Pulled in by default.
+keyless = ["obu/keyless"]
+
+# DEPRECATED standalone `legacy` codec (`obu.Legacy`) — decode-only
+# compatibility for pre-1.0 `legacy` obtext. Off by default; not in the
+# published wheel. Build `--features legacy` to expose it.
+legacy = ["obu/legacy"]
+
+[dependencies]
+obu = { path = "../obu", default-features = false }
+pyo3 = { version = "0.28", features = ["extension-module", "abi3-py38"] }

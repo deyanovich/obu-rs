@@ -42,6 +42,28 @@ lint:
     - rustup component add clippy
     - cargo clippy --workspace --all-features -- -D warnings
 
+# Builds the obu wheel and runs the Python binding's tests across the
+# PyO3 boundary that the Rust core tests don't reach: smoke tests plus
+# the canonical obu test vectors (positive + negative) run THROUGH the
+# binding. The vectors are a submodule under the obu crate, so the
+# checkout must be recursive. Required — this is the only coverage of
+# the PyO3 boundary.
+python-test:
+  stage: test
+  variables:
+    GIT_SUBMODULE_STRATEGY: recursive
+  script:
+    # Fail loudly if the vectors submodule is missing rather than letting
+    # the vector tests silently skip.
+    - test -f obu/tests/vectors/obu-test-vectors.jsonl
+    - apt-get update && apt-get install -y --no-install-recommends python3 python3-venv
+    - python3 -m venv .venv
+    - . .venv/bin/activate
+    - pip install --upgrade pip
+    - pip install 'maturin>=1.0,<2.0' pytest
+    - maturin develop --manifest-path obu-py/Cargo.toml
+    - pytest obu-py/python obu-py/tests -q
+
 # Validates the declared MSRV (rust-version = 1.77). Non-blocking.
 msrv:
   stage: test

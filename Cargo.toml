@@ -1,5 +1,5 @@
 [workspace]
-members = ["obu"]
+members = ["obu", "obu-py"]
 resolver = "2"
 
 # Release / bench profiles at the workspace level so they actually

@@ -1,0 +1,44 @@
+[build-system]
+requires = ["maturin>=1.0,<2.0"]
+build-backend = "maturin"
+
+[project]
+name = "obu"
+dynamic = ["version"]
+requires-python = ">=3.8"
+description = "Python bindings for obu — string-in/string-out UNAUTHENTICATED confidentiality (upcbc) and obfuscation-only (zdcbc) codecs. NOT authenticated; never use to protect secrets."
+readme = "README.md"
+license = "MIT OR Apache-2.0"
+license-files = ["LICENSE-MIT", "LICENSE-APACHE"]
+authors = [
+    { name = "Bojan Đuričković" }
+]
+keywords = ["obfuscation", "encoding", "unauthenticated", "oboron", "base32"]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Intended Audience :: Developers",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+    "Programming Language :: Rust",
+    "Programming Language :: Python :: Implementation :: CPython",
+    "Programming Language :: Python :: Implementation :: PyPy",
+    "Topic :: Software Development :: Libraries",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Typing :: Typed",
+]
+
+[project.urls]
+Homepage = "https://oboron.org/"
+Repository = "https://gitlab.com/oboron/obu-rs"
+Documentation = "https://oboron.org/obu-spec/oboron-obu-v1.0.html"
+
+[tool.maturin]
+python-source = "python"
+module-name = "obu._obu"
